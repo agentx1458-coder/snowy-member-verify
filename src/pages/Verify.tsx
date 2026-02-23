@@ -1,21 +1,90 @@
-import { useParams } from "react-router-dom";
-import { Shield } from "lucide-react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { Shield, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const DISCORD_CLIENT_ID = "1475479704730472529";
 
 const Verify = () => {
   const { serverSlug } = useParams();
+  const [searchParams] = useSearchParams();
+  const success = searchParams.get("success");
+  const error = searchParams.get("error");
+
   const serverName = serverSlug
     ? serverSlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Snowy Studios";
 
   const handleVerify = () => {
-    const redirectUri = encodeURIComponent(`${window.location.origin}/callback`);
+    // We need the guild_id. For now we pass slug and the callback will handle it.
+    // The state parameter carries guild_id:slug
+    // We'll need to fetch guild_id from the slug first
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const redirectUri = encodeURIComponent(`${supabaseUrl}/functions/v1/discord-callback`);
+    const clientId = "1475479704730472529";
     const scope = encodeURIComponent("identify guilds.join");
-    const oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
-    window.location.href = oauthUrl;
+    
+    // Fetch guild_id from slug, then redirect
+    fetch(`${supabaseUrl}/functions/v1/discord-api?action=servers`, {
+      headers: { "Content-Type": "application/json" },
+    })
+      .then(r => r.json())
+      .then(servers => {
+        const server = servers?.find((s: any) => s.slug === serverSlug);
+        const guildId = server?.guild_id || "unknown";
+        const state = encodeURIComponent(`${guildId}:${serverSlug || "default"}`);
+        const oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
+        window.location.href = oauthUrl;
+      })
+      .catch(() => {
+        // Fallback - try with slug as state
+        const state = encodeURIComponent(`unknown:${serverSlug || "default"}`);
+        const oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&state=${state}`;
+        window.location.href = oauthUrl;
+      });
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div className="glass-card rounded-2xl p-8 w-full max-w-md text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <h1 className="text-2xl font-display font-bold text-foreground mb-2">Verified!</h1>
+          <p className="text-muted-foreground text-sm">
+            Your membership has been backed up successfully. You can close this page.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    const errorMessages: Record<string, string> = {
+      alt_detected: "Alt account detected. You cannot verify with this account.",
+      token_failed: "Authentication failed. Please try again.",
+      user_fetch_failed: "Could not fetch your Discord info. Please try again.",
+      unknown: "Something went wrong. Please try again.",
+    };
+
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div className="glass-card rounded-2xl p-8 w-full max-w-md text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-8 h-8 text-destructive" />
+          </div>
+          <h1 className="text-2xl font-display font-bold text-foreground mb-2">Verification Failed</h1>
+          <p className="text-muted-foreground text-sm mb-6">
+            {errorMessages[error] || errorMessages.unknown}
+          </p>
+          <Button
+            onClick={() => window.location.href = window.location.pathname}
+            className="gradient-primary text-primary-foreground font-semibold hover:opacity-90"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
@@ -40,7 +109,7 @@ const Verify = () => {
         </Button>
 
         <p className="text-muted-foreground text-xs mt-6">
-          By verifying, you authorize this service to back up your Discord membership.
+          By verifying, you authorize this service to back up your Discord membership. Your IP address will be collected for alt detection purposes.
         </p>
       </div>
     </div>

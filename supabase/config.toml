@@ -1,1 +1,7 @@
 project_id = "ugljzgnvbcxwzuzbhxgm"
+
+[functions.discord-callback]
+verify_jwt = false
+
+[functions.discord-api]
+verify_jwt = false
