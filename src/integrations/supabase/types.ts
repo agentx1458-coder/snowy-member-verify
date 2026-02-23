@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      servers: {
+        Row: {
+          alt_blocking: boolean
+          alt_notify: boolean
+          created_at: string
+          guild_id: string
+          icon: string | null
+          id: string
+          member_count: number
+          name: string
+          slug: string
+          verified_count: number
+          verify_logs: boolean
+          verify_role_id: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          alt_blocking?: boolean
+          alt_notify?: boolean
+          created_at?: string
+          guild_id: string
+          icon?: string | null
+          id?: string
+          member_count?: number
+          name: string
+          slug: string
+          verified_count?: number
+          verify_logs?: boolean
+          verify_role_id?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          alt_blocking?: boolean
+          alt_notify?: boolean
+          created_at?: string
+          guild_id?: string
+          icon?: string | null
+          id?: string
+          member_count?: number
+          name?: string
+          slug?: string
+          verified_count?: number
+          verify_logs?: boolean
+          verify_role_id?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      verified_members: {
+        Row: {
+          access_token: string
+          avatar: string | null
+          created_at: string
+          discord_id: string
+          guild_id: string
+          id: string
+          ip_address: string | null
+          is_alt: boolean
+          refresh_token: string | null
+          status: string
+          username: string
+        }
+        Insert: {
+          access_token: string
+          avatar?: string | null
+          created_at?: string
+          discord_id: string
+          guild_id: string
+          id?: string
+          ip_address?: string | null
+          is_alt?: boolean
+          refresh_token?: string | null
+          status?: string
+          username: string
+        }
+        Update: {
+          access_token?: string
+          avatar?: string | null
+          created_at?: string
+          discord_id?: string
+          guild_id?: string
+          id?: string
+          ip_address?: string | null
+          is_alt?: boolean
+          refresh_token?: string | null
+          status?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
